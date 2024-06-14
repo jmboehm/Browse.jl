@@ -1,0 +1,5 @@
+imgui.ini
+.vscode
+aux/*
+*.code-workspace
+.DS_Store
