@@ -1,10 +1,37 @@
 # Browse.jl
 
+<img width="400" alt="Browse.jl Screenshot" src="assets/screenshot.png">
+
 Julia package that provides visualizations of [Tables.jl](https://github.com/JuliaData/Tables.jl)-compatible tabular data. Under the hood, it uses the immediate mode GUI [Dear ImGui](https://github.com/ocornut/imgui) (via [CImGui.jl](https://github.com/Gnimuc/CImGui.jl)), meaning that the visualizations will update when the underlying data changes.
 
 Very much in alpha stage.
 
 Reminder: this software is provided as-is, without any sorts of guarantees or implicit promises of support. See the [license](LICENSE.md) for details. If you want features or bug fixes, you can file an issue and hope that someone resolves it, or you can roll up your sleeves and do it yourself. 
+
+## Installation
+
+Browse.jl is not registered. To install, type in the Julia REPL:
+```
+    ] add https://github.com/jmboehm/Browse.jl
+```
+
+## Example
+
+```julia
+
+using Revise, RDatasets, DataFrames
+using Browse
+
+using CImGui
+using CImGui.CSyntax
+using CImGui.CSyntax.CStatic
+
+Browse.init()
+
+df_iris = dataset("datasets", "iris")
+Browse.@browse df_iris
+
+```
 
 ## Related Packages
 

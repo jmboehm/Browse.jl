@@ -57,6 +57,12 @@ function init_renderer(width, height, title::AbstractString)
         CImGui.c_set!(style.Colors, CImGui.ImGuiCol_WindowBg, ImVec4(col.x, col.y, col.z, 1.0f0))
     end
 
+    # try setting up docking?
+    # ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
+    # CImGui.DockSpaceOverViewport(CImGui.GetMainViewport(), CImGui.ImGuiDockNodeFlags_PassthruCentralNode)
+    # i = LibCImGui.ImGuiWindowClass_ImGuiWindowClass()
+    # LibCImGui.igDockSpaceOverViewport(LibCImGui.igGetMainViewport(), CImGui.ImGuiDockNodeFlags_PassthruCentralNode, i)
+
     # load Fonts
     # - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use `CImGui.PushFont/PopFont` to select them.
     # - `CImGui.AddFontFromFileTTF` will return the `Ptr{ImFont}` so you can store it if you need to select the font among multiple.

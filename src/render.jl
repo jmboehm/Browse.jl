@@ -55,7 +55,7 @@ function render(ui; width=1280, height=720, title::AbstractString="Demo", hotloa
     return t
 end
 
-function init(; window_width = 1280, window_height = 720, show_demo_window = true)
+function init(; window_width = 1280, window_height = 720, show_demo_window = false, show_framerate_window = false)
 
     # start the render loop
     render(width = window_width, height = window_height, title = "Browse.jl") do
@@ -104,11 +104,12 @@ function init(; window_width = 1280, window_height = 720, show_demo_window = tru
         # CImGui.End()
 
         # framerate window
-        if CImGui.Begin("Framerate")
-            CImGui.Text(@sprintf("Application average %.3f ms/frame (%.1f FPS)", 1000 / unsafe_load(CImGui.GetIO().Framerate), unsafe_load(CImGui.GetIO().Framerate)))
-            CImGui.End()
+        if show_framerate_window
+            if CImGui.Begin("Framerate")
+                CImGui.Text(@sprintf("Application average %.3f ms/frame (%.1f FPS)", 1000 / unsafe_load(CImGui.GetIO().Framerate), unsafe_load(CImGui.GetIO().Framerate)))
+                CImGui.End()
+            end
         end
-
     end
 
 end

@@ -1,6 +1,6 @@
-using Revise, RDatasets
-using DataFrames
-using Printf
+using Revise, RDatasets, DataFrames
+# using DataFrames
+# using Printf
 
 include("../src/Browse.jl")
 
@@ -19,18 +19,19 @@ try
 catch
 end
 
-global window_width = 1280
-global window_height = 720
+# global window_width = 1280
+# global window_height = 720
 
-df_name = "random"
-N = 10
-df = DataFrame(index = collect(1:N), sqrt = sqrt.(1:N), cubrt = (1:N).^(1/3), qrt = (1:N).^(1/4))
+# df_name = "random"
+# N = 10
+# df = DataFrame(index = collect(1:N), sqrt = sqrt.(1:N), cubrt = (1:N).^(1/3), qrt = (1:N).^(1/4))
 
 Browse.init()
 
 Browse.@browse df
 
-df2 = dataset("datasets", "iris")
+df_iris = dataset("datasets", "iris")
+Browse.@browse df_iris
 
 
 df2.test1 = df2.PetalWidth .+ 1.0
@@ -39,6 +40,11 @@ for i = 2:20
 end
 
 Browse.@browse df2
+
+
+df_iris = dataset("datasets", "iris")
+Browse.@browse df_iris
+
 
 using Random
 N = 5
