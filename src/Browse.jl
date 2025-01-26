@@ -1,11 +1,11 @@
 module Browse
 
     using CImGui
-    using CImGui.ImGuiGLFWBackend
-    using CImGui.ImGuiGLFWBackend.LibCImGui
-    using CImGui.ImGuiGLFWBackend.LibGLFW
-    using CImGui.ImGuiOpenGLBackend
-    using CImGui.ImGuiOpenGLBackend.ModernGL
+
+    # Load deps for the GLFW/OpenGL backend
+    import GLFW
+    import ModernGL
+
     using CImGui.CSyntax
     using Printf
 

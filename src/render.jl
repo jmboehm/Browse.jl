@@ -1,61 +1,69 @@
-function renderloop(window, ctx, glfw_ctx, opengl_ctx, ui=()->nothing, hotloading=false)
-    try
-        while glfwWindowShouldClose(window) == 0
-            glfwPollEvents()
-            ImGuiOpenGLBackend.new_frame(opengl_ctx)
-            ImGuiGLFWBackend.new_frame(glfw_ctx)
-            CImGui.NewFrame()
-
-            # hotloading ? Base.invokelatest(ui) : ui()
-            ui()
-
-            CImGui.Render()
-            glfwMakeContextCurrent(window)
-
-            width, height = Ref{Cint}(), Ref{Cint}() #! need helper fcn
-            glfwGetFramebufferSize(window, width, height)
-            display_w = width[]
-            display_h = height[]
-
-            glViewport(0, 0, display_w, display_h)
-            glClearColor(0.2, 0.2, 0.2, 1)
-            glClear(GL_COLOR_BUFFER_BIT)
-            ImGuiOpenGLBackend.render(opengl_ctx)
-
-            if unsafe_load(igGetIO().ConfigFlags) & ImGuiConfigFlags_ViewportsEnable == ImGuiConfigFlags_ViewportsEnable
-                backup_current_context = glfwGetCurrentContext()
-                igUpdatePlatformWindows()
-                GC.@preserve opengl_ctx igRenderPlatformWindowsDefault(C_NULL, pointer_from_objref(opengl_ctx))
-                glfwMakeContextCurrent(backup_current_context)
-            end
-            glfwSwapBuffers(window)
-            yield()
-        end
-    catch e
-        @error "Error in renderloop!" exception=e
-        Base.show_backtrace(stderr, catch_backtrace())
-    finally
-        ImGuiOpenGLBackend.shutdown(opengl_ctx)
-        ImGuiGLFWBackend.shutdown(glfw_ctx)
-        CImGui.DestroyContext(ctx)
-        glfwDestroyWindow(window)
+function renderloop(ctx, ui=()->nothing, width=1024, height=720, title="Browse.jl", hotloading=false)
+    clear_color = Cfloat[0.45, 0.55, 0.60, 1.00]
+    CImGui.render(ctx; engine=nothing, clear_color=Ref(clear_color),
+        window_size=(width, height),
+        window_title=title) do
+        ui()
     end
+    # try
+    #     while glfwWindowShouldClose(window) == 0
+    #         glfwPollEvents()
+    #         ImGuiOpenGLBackend.new_frame(opengl_ctx)
+    #         ImGuiGLFWBackend.new_frame(glfw_ctx)
+    #         CImGui.NewFrame()
+
+    #         # hotloading ? Base.invokelatest(ui) : ui()
+    #         ui()
+
+    #         CImGui.Render()
+    #         glfwMakeContextCurrent(window)
+
+    #         width, height = Ref{Cint}(), Ref{Cint}() #! need helper fcn
+    #         glfwGetFramebufferSize(window, width, height)
+    #         display_w = width[]
+    #         display_h = height[]
+
+    #         glViewport(0, 0, display_w, display_h)
+    #         glClearColor(0.2, 0.2, 0.2, 1)
+    #         glClear(GL_COLOR_BUFFER_BIT)
+    #         ImGuiOpenGLBackend.render(opengl_ctx)
+
+    #         if unsafe_load(igGetIO().ConfigFlags) & ImGuiConfigFlags_ViewportsEnable == ImGuiConfigFlags_ViewportsEnable
+    #             backup_current_context = glfwGetCurrentContext()
+    #             igUpdatePlatformWindows()
+    #             GC.@preserve opengl_ctx igRenderPlatformWindowsDefault(C_NULL, pointer_from_objref(opengl_ctx))
+    #             glfwMakeContextCurrent(backup_current_context)
+    #         end
+    #         glfwSwapBuffers(window)
+    #         yield()
+    #     end
+    # catch e
+    #     @error "Error in renderloop!" exception=e
+    #     Base.show_backtrace(stderr, catch_backtrace())
+    # finally
+    #     ImGuiOpenGLBackend.shutdown(opengl_ctx)
+    #     ImGuiGLFWBackend.shutdown(glfw_ctx)
+    #     CImGui.DestroyContext(ctx)
+    #     glfwDestroyWindow(window)
+    # end
 end
 
-function render(ui; width=1280, height=720, title::AbstractString="Demo", hotloading=false)
-    window, ctx, glfw_ctx, opengl_ctx = init_renderer(width, height, title)
+function render(ui; width=1280, height=720, title::AbstractString="Browse.jl", hotloading=false)
+    # window, ctx, glfw_ctx, opengl_ctx = init_renderer(width, height, title)
+
+    ctx = init_renderer()
 
     # try setting up docking?
     # ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
     # CImGui.DockSpaceOverViewport(CImGui.GetMainViewport(), CImGui.ImGuiDockNodeFlags_PassthruCentralNode)
 
-    GC.@preserve window ctx begin
-        t = @async renderloop(window, ctx, glfw_ctx, opengl_ctx, ui, hotloading)
+    GC.@preserve ctx begin
+        t = @async renderloop(ctx, ui, width, height, title, hotloading)
     end
     return t
 end
 
-function init(; window_width = 1280, window_height = 720, show_demo_window = false, show_framerate_window = false)
+function init(; window_width = 1280, window_height = 720, show_demo_window = true)
 
     # start the render loop
     render(width = window_width, height = window_height, title = "Browse.jl") do
@@ -65,6 +73,14 @@ function init(; window_width = 1280, window_height = 720, show_demo_window = fal
         end
     
         show_demo_window && @c CImGui.ShowDemoWindow(&show_demo_window)
+
+        # # show image example
+        # if CImGui.Begin("Image Demo")
+        #     image = rand(GL.GLubyte, 4, img_width, img_height)
+        #     CImGui.update_image_texture(image_id, image, img_width, img_height)
+        #     CImGui.Image(Ptr{Cvoid}(image_id), CImGui.ImVec2(img_width, img_height))
+        #     CImGui.End()
+        # end
 
         # CImGui.Begin("TEST") 
         #     CImGui.Text("This is some useful text.")  # display some text
@@ -104,12 +120,11 @@ function init(; window_width = 1280, window_height = 720, show_demo_window = fal
         # CImGui.End()
 
         # framerate window
-        if show_framerate_window
-            if CImGui.Begin("Framerate")
-                CImGui.Text(@sprintf("Application average %.3f ms/frame (%.1f FPS)", 1000 / unsafe_load(CImGui.GetIO().Framerate), unsafe_load(CImGui.GetIO().Framerate)))
-                CImGui.End()
-            end
+        if CImGui.Begin("Framerate")
+            CImGui.Text(@sprintf("Application average %.3f ms/frame (%.1f FPS)", 1000 / unsafe_load(CImGui.GetIO().Framerate), unsafe_load(CImGui.GetIO().Framerate)))
+            CImGui.End()
         end
+
     end
 
 end

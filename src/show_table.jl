@@ -116,7 +116,7 @@ global function show_table(p_open::Ref{Bool}, table, table_name::String, i0, i1)
 
         rind = 0
         # outer_size = CImGui.ImVec2(min(size(table, 2)*100, window_width),min_table_height)
-        CImGui.BeginTable("table1", length(s.names), table_flags, CImGui.ImVec2(0.0, 100.0) )
+        if CImGui.BeginTable("table1", length(s.names)+1, table_flags, CImGui.ImVec2(0.0, 100.0) )
 
             # ImGui::TableSetupScrollFreeze(freeze_cols, freeze_rows);
 
@@ -137,7 +137,8 @@ global function show_table(p_open::Ref{Bool}, table, table_name::String, i0, i1)
                 rind += 1
             end
 
-        CImGui.EndTable()
+            CImGui.EndTable()
+        end
 
     # # most "big" widgets share a common width settings by default.
     # # CImGui.PushItemWidth(CImGui.GetWindowWidth() * 0.65)    # use 2/3 of the space for widgets and 1/3 for labels (default)

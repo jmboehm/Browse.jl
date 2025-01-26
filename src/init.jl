@@ -1,36 +1,10 @@
 function __init__()
-    @static if Sys.isapple()
-        # OpenGL 3.2 + GLSL 150
-        global glsl_version = 150
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3)
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2)
-        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE) # 3.2+ only
-        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE) # required on Mac
-    else
-        # OpenGL 3.0 + GLSL 130
-        global glsl_version = 130
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3)
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0)
-        # glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE) # 3.2+ only
-        # glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE) # 3.0+ only
-    end
+    CImGui.set_backend(:GlfwOpenGL3)
 end
 
 #? error_callback(err::GLFW.GLFWError) = @error "GLFW ERROR: code $(err.code) msg: $(err.description)"
 
-function init_renderer(width, height, title::AbstractString)
-    # setup GLFW error callback
-    #? GLFW.SetErrorCallback(error_callback)
-
-    # create window
-    window = glfwCreateWindow(width, height, title, C_NULL, C_NULL)
-    @assert window != C_NULL
-    glfwMakeContextCurrent(window)
-    glfwSwapInterval(1)  # enable vsync
-
-    # create OpenGL and GLFW context
-    window_ctx = ImGuiGLFWBackend.create_context(window)
-    gl_ctx = ImGuiOpenGLBackend.create_context()
+function init_renderer() #width, height, title::AbstractString
 
     # setup Dear ImGui context
     ctx = CImGui.CreateContext()
@@ -50,18 +24,12 @@ function init_renderer(width, height, title::AbstractString)
     # CImGui.StyleColorsLight()
 
     # When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
-    style = Ptr{ImGuiStyle}(CImGui.GetStyle())
-    if unsafe_load(io.ConfigFlags) & ImGuiConfigFlags_ViewportsEnable == ImGuiConfigFlags_ViewportsEnable
+    style = Ptr{CImGui.ImGuiStyle}(CImGui.GetStyle())
+    if unsafe_load(io.ConfigFlags) & CImGui.ImGuiConfigFlags_ViewportsEnable == CImGui.ImGuiConfigFlags_ViewportsEnable
         style.WindowRounding = 5.0f0
         col = CImGui.c_get(style.Colors, CImGui.ImGuiCol_WindowBg)
-        CImGui.c_set!(style.Colors, CImGui.ImGuiCol_WindowBg, ImVec4(col.x, col.y, col.z, 1.0f0))
+        CImGui.c_set!(style.Colors, CImGui.ImGuiCol_WindowBg, CImGui.ImVec4(col.x, col.y, col.z, 1.0f0))
     end
-
-    # try setting up docking?
-    # ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
-    # CImGui.DockSpaceOverViewport(CImGui.GetMainViewport(), CImGui.ImGuiDockNodeFlags_PassthruCentralNode)
-    # i = LibCImGui.ImGuiWindowClass_ImGuiWindowClass()
-    # LibCImGui.igDockSpaceOverViewport(LibCImGui.igGetMainViewport(), CImGui.ImGuiDockNodeFlags_PassthruCentralNode, i)
 
     # load Fonts
     # - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use `CImGui.PushFont/PopFont` to select them.
@@ -81,19 +49,7 @@ function init_renderer(width, height, title::AbstractString)
     CImGui.AddFontFromFileTTF(fonts, joinpath(fonts_dir, "Recursive Mono Linear-Regular.ttf"), 16)
     CImGui.AddFontFromFileTTF(fonts, joinpath(fonts_dir, "Recursive Sans Casual-Regular.ttf"), 16)
     CImGui.AddFontFromFileTTF(fonts, joinpath(fonts_dir, "Recursive Sans Linear-Regular.ttf"), 16)
-    # @assert default_font != C_NULL
 
-    # # create texture for image drawing
-    # img_width, img_height = 256, 256
-    # image_id = ImGuiOpenGLBackend.ImGui_ImplOpenGL3_CreateImageTexture(img_width, img_height)
-
-    # setup Platform/Renderer bindings
-    ImGuiGLFWBackend.init(window_ctx)
-    ImGuiOpenGLBackend.init(gl_ctx)
-
-    # CImGui.SetNextWindowPos((0, 0))
-    # CImGui.SetNextWindowSize((width, height))
-
-    return window, ctx, window_ctx, gl_ctx
+    return ctx
 end
 
